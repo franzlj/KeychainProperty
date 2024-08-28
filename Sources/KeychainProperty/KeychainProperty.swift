@@ -60,7 +60,11 @@ public struct KeychainProperty<T: Codable> {
                 .accessibility(.whenPasscodeSetThisDeviceOnly)
         }
         
-        valueSubject.send(wrappedValue)
+        if cacheValue && !requiresBiometry {
+            // Sending value on init should not trigger a direct FaceID,
+            // and only makes sense, when we are not caching.
+            valueSubject.send(wrappedValue)
+        }
     }
     
     public var wrappedValue: T? {

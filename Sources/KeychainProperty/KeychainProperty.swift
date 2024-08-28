@@ -25,7 +25,7 @@ public struct KeychainProperty<T: Codable> {
     
     private let valueSubject = CurrentValueSubject<T?, Never>(nil)
     
-    init(
+    public init(
         serviceIdentifier: String = Bundle.main.bundleIdentifier!,
         valueKey: String,
         requiresBiometry: Bool = false,

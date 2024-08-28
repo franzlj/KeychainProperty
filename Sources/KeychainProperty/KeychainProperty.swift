@@ -23,18 +23,34 @@ public struct KeychainProperty<T: Codable> {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     
-    private let valueSubject = CurrentValueSubject<T?, Never>(nil)
+    private let valueSubject: any Subject<T?, Never>
     
+    /// KeychainProperty initializer.
+    ///
+    /// The accessibility of this item is currently always set to `.whenPasscodeSetThisDeviceOnly`.
+    /// When biometric protection is enabled, it is currently always set to `.biometryCurrentSet`.
+    /// - Parameters:
+    ///   - serviceIdentifier: Service Identifier for the keychain
+    ///   - valueKey: Key for the value within the keychain
+    ///   - requiresBiometry: whether this value should be protected by biometric authentication.
+    ///   - cacheValue: Whether biometric protected values should be cached after first read.
+    ///   - logger: Optional `Logger` to log to
     public init(
         serviceIdentifier: String = Bundle.main.bundleIdentifier!,
         valueKey: String,
         requiresBiometry: Bool = false,
+        cacheValue: Bool = false,
         logger: Logger? = nil
     ) {
         self.serviceIdentifier = serviceIdentifier
         self.valueKey = valueKey
         self.requiresBiometry = requiresBiometry
         self.logger = logger
+        self.valueSubject = if cacheValue {
+            CurrentValueSubject<T?, Never>(nil)
+        } else {
+            PassthroughSubject()
+        }
         
         if requiresBiometry {
             self.keychain = Keychain(service: serviceIdentifier)
@@ -76,5 +92,14 @@ public struct KeychainProperty<T: Codable> {
     
     public var projectedValue: AnyPublisher<T?, Never> {
         valueSubject.eraseToAnyPublisher()
+    }
+}
+
+private extension Subject {
+    
+    /// Provide `value`property to all Subjects.
+    /// Will only provide an actual value if the underlying subject is a `CurrentValueSubject`.
+    var value: Output? {
+        (self as? CurrentValueSubject<Output, Failure>)?.value
     }
 }

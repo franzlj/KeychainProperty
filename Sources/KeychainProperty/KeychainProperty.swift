@@ -12,6 +12,15 @@ import KeychainAccess
 
 @propertyWrapper
 public struct KeychainProperty<T: Codable> {
+    
+    /// Object accessible via the `KeychainProperty`s projectedValue (`$`),
+    /// in order to access advanced underlying properties, such as a Publisher
+    /// of the value or the underlying Keychain.
+    public struct Accessor {
+        public let keychain: Keychain
+        public let publisher: any Publisher<T?, Never>
+    }
+    
     private let serviceIdentifier: String
     private let valueKey: String
     private let requiresBiometry: Bool
@@ -94,8 +103,11 @@ public struct KeychainProperty<T: Codable> {
         }
     }
     
-    public var projectedValue: AnyPublisher<T?, Never> {
-        valueSubject.eraseToAnyPublisher()
+    public var projectedValue: Accessor {
+        Accessor(
+            keychain: keychain,
+            publisher: valueSubject.eraseToAnyPublisher()
+        )
     }
 }
 

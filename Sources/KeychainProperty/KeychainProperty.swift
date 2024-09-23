@@ -96,7 +96,7 @@ public struct KeychainProperty<T: Codable> {
             if let newValue, let data = try? encoder.encode(newValue) {
                 keychain[data: valueKey] = data
             } else {
-                keychain.remove(valueKey)
+                try? keychain.remove(valueKey)
             }
             
             valueSubject.send(newValue)
